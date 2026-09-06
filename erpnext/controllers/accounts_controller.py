@@ -2913,6 +2913,9 @@ def validate_conversion_rate(currency, conversion_rate, conversion_rate_label, c
 
 
 def validate_taxes_and_charges(tax):
+	if tax.get("category") is None and tax.meta.get_field("category"):
+		tax.category = tax.meta.get_field("category").default or "Total"
+
 	if tax.charge_type in ["Actual", "On Net Total", "On Paid Amount"] and tax.row_id:
 		frappe.throw(
 			_("Can refer row only if the charge type is 'On Previous Row Amount' or 'Previous Row Total'")
@@ -3415,7 +3418,7 @@ def add_taxes_from_tax_template(child_item, parent_doc, db_insert=True):
 						"rate": tax_rate,
 					}
 				)
-				if parent_doc.doctype == "Purchase Order":
+				if parent_doc.doctype in ("Purchase Order", "Purchase Invoice", "Purchase Receipt"):
 					tax_row.update({"category": "Total", "add_deduct_tax": "Add"})
 				if db_insert:
 					tax_row.db_insert()
